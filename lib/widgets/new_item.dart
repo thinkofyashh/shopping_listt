@@ -21,37 +21,31 @@ class _NewItemState extends State<NewItem> {
   var selectedcategory = categories[Categories.vegetables]!;
   final formkey = GlobalKey<FormState>();
 
-  void saveitem() {
+  void saveitem() async {
     if (formkey.currentState!.validate()) {
       formkey.currentState!
           .save(); // this will make sure that the value is valide .
       print(enteredName);
       print(enteredQuantity);
       print(selectedcategory);
-      //final url = Uri.https(
-        //  "console.firebase.google.com/project/flutter-prep-d56a1/database/flutter-prep-d56a1-default-rtdb/data/~2F",
-          //"Shopping List.json");
       final url = Uri.https(
         "flutter-prep-d56a1-default-rtdb.firebaseio.com",
         "ShoppingList.json",
       );
-
-
-      http.post(url, headers: {
+     final response=await http.post (url, headers: {
         'Content-Type': 'application/json',
       }, body: json.encode({
         'name': enteredName,
         'quantity': enteredQuantity,
         'category': selectedcategory.title
       }));
-      /*Navigator.of(context).pop(GroceryItem(
-          id: DateTime.now().toString(),
-          name: enteredName,
-          quantity: enteredQuantity.toDouble(),
-          category: selectedcategory));
-    }
+      print(response.statusCode);
+      print(response.body);
 
-       */
+      if(!context.mounted){
+        return;
+      }
+      Navigator.of(context).pop();
     }
   }
 
