@@ -24,7 +24,6 @@ class _GroceryListState extends State<GroceryList> {
       groceryitem.add(newitem);
     });
   }
-
   void removeitem(GroceryItem item) {
     setState(() {
       groceryitem.remove(item);
