@@ -20,11 +20,15 @@ class _NewItemState extends State<NewItem> {
   var enteredQuantity = 1;
   var selectedcategory = categories[Categories.vegetables]!;
   final formkey = GlobalKey<FormState>();
+  var issending = false;
 
   void saveitem() async {
     if (formkey.currentState!.validate()) {
       formkey.currentState!
           .save(); // this will make sure that the value is valide .
+      setState(() {
+        issending = true;
+      });
       print(enteredName);
       print(enteredQuantity);
       print(selectedcategory);
@@ -32,126 +36,136 @@ class _NewItemState extends State<NewItem> {
         "flutter-prep-d56a1-default-rtdb.firebaseio.com",
         "ShoppingList.json",
       );
-     final response=await http.post (url, headers: {
-        'Content-Type': 'application/json',
-      }, body: json.encode({
-        'name': enteredName,
-        'quantity': enteredQuantity,
-        'category': selectedcategory.title
-      }));
-      print(response.statusCode);
-      print(response.body);
+      final response = await http.post(url,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'name': enteredName,
+            'quantity': enteredQuantity,
+            'category': selectedcategory.title
+          }));
+      final Map<String, dynamic> resdata = json.decode(response.body);
 
-      if(!context.mounted){
+      if (!context.mounted) {
         return;
       }
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(GroceryItem(
+          id: resdata["name"],
+          name: enteredName,
+          quantity: enteredQuantity,
+          category: selectedcategory));
     }
   }
 
-    Widget build(BuildContext context) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text("Add a new items"),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Form(
-            key: formkey,
-            child: Column(
-              children: [
-                TextFormField(
-                  maxLength: 50,
-                  decoration: const InputDecoration(
-                    label: Text("Name"),
-                  ),
-                  validator: (value) {
-                    if (value == null ||
-                        value == value.isEmpty ||
-                        value
-                            .trim()
-                            .length <= 1 ||
-                        value
-                            .trim()
-                            .length > 50) {
-                      return "Must be Between 1 and 50 characters.";
-                    }
-                    return null;
-                  },
-                  onSaved: (value) {
-                    enteredName = value!;
-                  },
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Add a new items"),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Form(
+          key: formkey,
+          child: Column(
+            children: [
+              TextFormField(
+                maxLength: 50,
+                decoration: const InputDecoration(
+                  label: Text("Name"),
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          label: Text("Quantity"),
-                        ),
-                        initialValue: enteredQuantity.toString(),
-                        validator: (value) {
-                          if (value == null ||
-                              value == value.isEmpty ||
-                              int.tryParse(value) == null ||
-                              int.tryParse(value)! <= 0) {
-                            return "Must be a valid,positive number.";
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          // enteredName=value!;
-                          enteredQuantity = int.parse(value!);
-                        },
+                validator: (value) {
+                  if (value == null ||
+                      value == value.isEmpty ||
+                      value.trim().length <= 1 ||
+                      value.trim().length > 50) {
+                    return "Must be Between 1 and 50 characters.";
+                  }
+                  return null;
+                },
+                onSaved: (value) {
+                  enteredName = value!;
+                },
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        label: Text("Quantity"),
                       ),
+                      initialValue: enteredQuantity.toString(),
+                      validator: (value) {
+                        if (value == null ||
+                            value == value.isEmpty ||
+                            int.tryParse(value) == null ||
+                            int.tryParse(value)! <= 0) {
+                          return "Must be a valid,positive number.";
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        // enteredName=value!;
+                        enteredQuantity = int.parse(value!);
+                      },
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: DropdownButtonFormField(
-                            value: selectedcategory,
-                            items: [
-                              for (final category in categories.entries)
-                                DropdownMenuItem(
-                                    value: category.value,
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          height: 16,
-                                          width: 16,
-                                          color: category.value.color,
-                                        ),
-                                        const SizedBox(
-                                          width: 6,
-                                        ),
-                                        Text(category.value.title)
-                                      ],
-                                    ))
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                selectedcategory = value!;
-                              });
-                            }))
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                        onPressed: () {
-                          formkey.currentState!.reset();
-                        },
-                        child: const Text("Reset")),
-                    ElevatedButton(
-                        onPressed: saveitem, child: const Text("Add an item"))
-                  ],
-                )
-              ],
-            ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: DropdownButtonFormField(
+                          value: selectedcategory,
+                          items: [
+                            for (final category in categories.entries)
+                              DropdownMenuItem(
+                                  value: category.value,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        height: 16,
+                                        width: 16,
+                                        color: category.value.color,
+                                      ),
+                                      const SizedBox(
+                                        width: 6,
+                                      ),
+                                      Text(category.value.title)
+                                    ],
+                                  ))
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              selectedcategory = value!;
+                            });
+                          }))
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                      onPressed: issending
+                          ? null
+                          : () {
+                              formkey.currentState!.reset();
+                            },
+                      child: const Text("Reset")),
+                  ElevatedButton(
+                      onPressed: issending ? null : saveitem,
+                      child: issending
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(),
+                            )
+                          : const Text("Add an item"))
+                ],
+              )
+            ],
           ),
         ),
-      );
-    }
+      ),
+    );
   }
+}
