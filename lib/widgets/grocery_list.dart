@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shopping_listt/data/categories.dart';
 import 'package:shopping_listt/data/dummy_item.dart';
 import 'package:shopping_listt/widgets/new_item.dart';
 import 'package:shopping_listt/models/grocery_item.dart';
+import 'package:http/http.dart' as http;
 
 class GroceryList extends StatefulWidget {
   const GroceryList({Key? key}) : super(key: key);
@@ -12,18 +16,43 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   @override
-  final List<GroceryItem> groceryitem = [];
+   List<GroceryItem> groceryitem = [];
 
-  void additem() async {
-    final newitem = await Navigator.of(context).push<GroceryItem>(
-        MaterialPageRoute(builder: (ctx) => const NewItem()));
-    if (newitem == null) {
-      return;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loaditem();
+  }
+
+  void loaditem() async {
+    final url = Uri.https(
+        "flutter-prep-d56a1-default-rtdb.firebaseio.com", "ShoppingList.json");
+    final response = await http.get(url);
+    print(response.body);
+    final Map<String, dynamic> listData = json.decode(response.body);
+    final List<GroceryItem> loadeditem = [];
+    for (final item in listData.entries) {
+      final category=categories.entries.firstWhere((catitem) => catitem.value.title==item.value["category"]).value;
+      loadeditem.add(GroceryItem(id: item.key,
+          name: item.value["name"],
+          quantity: item.value["quantity"],
+          category: category));
     }
     setState(() {
-      groceryitem.add(newitem);
+      groceryitem=loadeditem;
     });
   }
+
+  void additem() async {
+    await Navigator.of(context).push<GroceryItem>(
+        MaterialPageRoute(builder: (ctx) => const NewItem()));
+    loaditem();
+    //final url =Uri.https("flutter-prep-d56a1-default-rtdb.firebaseio.com","ShoppingList.json");
+    //final response=await http.get(url);
+    //print(response.body);
+  }
+
   void removeitem(GroceryItem item) {
     setState(() {
       groceryitem.remove(item);
@@ -37,10 +66,11 @@ class _GroceryListState extends State<GroceryList> {
     if (groceryitem.isNotEmpty) {
       content = ListView.builder(
           itemCount: groceryitem.length,
-          itemBuilder: (ctx, index) => Dismissible(
+          itemBuilder: (ctx, index) =>
+              Dismissible(
                 background: Container(
                   color: Colors.red,
-                  child:const Icon(Icons.delete),
+                  child: const Icon(Icons.delete),
                   alignment: Alignment.centerRight,
                 ),
                 key: ValueKey(groceryitem[index].id),
