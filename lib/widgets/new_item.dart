@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shopping_listt/data/categories.dart';
@@ -21,7 +20,6 @@ class _NewItemState extends State<NewItem> {
   var selectedcategory = categories[Categories.vegetables]!;
   final formkey = GlobalKey<FormState>();
   var issending = false;
-
   void saveitem() async {
     if (formkey.currentState!.validate()) {
       formkey.currentState!
@@ -45,6 +43,7 @@ class _NewItemState extends State<NewItem> {
             'quantity': enteredQuantity,
             'category': selectedcategory.title
           }));
+
       final Map<String, dynamic> resdata = json.decode(response.body);
 
       if (!context.mounted) {

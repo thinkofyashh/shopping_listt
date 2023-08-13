@@ -19,6 +19,7 @@ class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> groceryitem = [];
 
   var isLoading = true;
+  String? error;
 
   @override
   void initState() {
@@ -30,8 +31,20 @@ class _GroceryListState extends State<GroceryList> {
   void loaditem() async {
     final url = Uri.https(
         "flutter-prep-d56a1-default-rtdb.firebaseio.com", "ShoppingList.json");
+  try{
     final response = await http.get(url);
+    if(response.statusCode>=400){
+      setState(() {
+        error="Failed to fetch Data from the Server.";
+      });
+    }
     print(response.body);
+    if(response.body=='null'){
+      setState(() {
+        isLoading=false;
+      });
+      return;
+    }
     final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> loadeditem = [];
     for (final item in listData.entries) {
@@ -48,6 +61,11 @@ class _GroceryListState extends State<GroceryList> {
     setState(() {
       groceryitem = loadeditem;
     });
+  }catch(err){
+    setState(() {
+      error="Something went wrong";
+    });
+  }
   }
 
   void additem() async {
@@ -67,10 +85,20 @@ class _GroceryListState extends State<GroceryList> {
     });
   }
 
-  void removeitem(GroceryItem item) {
+  void removeitem(GroceryItem item) async{
+    final index=groceryitem.indexOf(item);
     setState(() {
       groceryitem.remove(item);
     });
+     final url = Uri.https(
+        "flutter-prep-d56a1-default-rtdb.firebaseio.com", "ShoppingList/${item.id}.json");
+    final response=await http.delete(url);
+    if (response.statusCode>= 400){
+      // optinonal show error messege here .
+      setState(() {
+        groceryitem.insert(index,item);
+      });
+    }
   }
 
   Widget build(BuildContext context) {
@@ -106,6 +134,11 @@ class _GroceryListState extends State<GroceryList> {
                   trailing: Text(groceryitem[index].quantity.toString()),
                 ),
               ));
+    }
+
+    if(error!=null){
+      content= Center(
+          child: Text(error!));
     }
     return Scaffold(
       appBar: AppBar(
